@@ -5,6 +5,9 @@ on:
     # Manually triggered from the Actions tab.
     # Runs on the develop branch by default.
 
+permissions:
+  contents: read
+
 concurrency:
   group: release-smoke-${{ github.ref_name }}
   cancel-in-progress: true
