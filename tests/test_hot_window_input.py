@@ -1479,13 +1479,14 @@ class TestStaleWakeTimestampAcrossUtterances:
 
 @pytest.mark.unit
 class TestIntentJudgeGating:
-    """The intent judge must not be called on pure ambient speech.
+    """The intent judge must not be called when a deterministic path suffices.
 
     Calling it on every utterance blocks the audio loop for up to
     `intent_judge_timeout_sec` on each background chatter, which can
-    cascade into UI freezes when many utterances queue up during a slow
-    or loaded Ollama. The judge adds value only when there's an
-    engagement signal: wake word, hot window, or active TTS.
+    cascade into UI freezes when many utterances queue up during a slow or
+    loaded Ollama. Ambient speech is ignored, an explicit wake word uses the
+    deterministic fast path, and ambiguous hot-window/TTS input can still use
+    the judge.
     """
 
     @patch("builtins.print")
@@ -1508,8 +1509,8 @@ class TestIntentJudgeGating:
         listener.state_manager.stop()
 
     @patch("builtins.print")
-    def test_judge_called_when_wake_word_detected(self, _print):
-        """Utterances containing the wake word do reach the judge."""
+    def test_judge_skipped_for_explicit_wake_fastpath(self, _print):
+        """An explicit wake word is accepted without an intent-model round trip."""
         listener, _ = _create_listener()
 
         mock_judge = _install_intent_judge(
@@ -1520,7 +1521,8 @@ class TestIntentJudgeGating:
             "jarvis what time is it", utterance_energy=0.01,
         )
 
-        assert mock_judge.judge.call_count == 1
+        assert mock_judge.judge.call_count == 0
+        assert _accepted_query(listener) == "what time is it"
         listener.state_manager.stop()
 
     @patch("builtins.print")
