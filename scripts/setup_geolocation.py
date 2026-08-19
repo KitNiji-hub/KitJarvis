@@ -36,7 +36,7 @@ try:
 except ImportError as e:
     print(
         "Warning: Could not import Jarvis location utilities from 'jarvis.utils.location'.\n"
-        f"  Import error: {e}\n"
+        f"  Import error type: {type(e).__name__}\n"
         "  Make sure you're running from the repository root and that 'src' is on PYTHONPATH.\n"
         "  Example (zsh/bash): export PYTHONPATH=\"$(pwd)/src:$PYTHONPATH\"\n"
         "  Or install the project in editable mode once packaging is set up (pip install -e .)."
@@ -99,12 +99,13 @@ def print_setup_instructions():
             try:
                 location = get_location_info(settings=SETTINGS)
                 if "error" in location:
-                    print(f"❌ Location test failed: {location['error']}")
+                    print("❌ Location test failed")
                 else:
+                    # Avoid echoing detected city/IP/coordinates to logs. The
+                    # setup check only needs to confirm resolution succeeded.
                     print("✅ Location detection working!")
-                    print(f"   Detected: {location.get('city', 'Unknown')}, {location.get('country', 'Unknown')}")
             except Exception as e:
-                print(f"❌ Location test error: {e}")
+                print(f"❌ Location test error type: {type(e).__name__}")
     else:
         print("\n📋 SETUP INSTRUCTIONS:")
         print("1. Register for a free MaxMind account:")
@@ -143,7 +144,7 @@ def print_setup_instructions():
 
 
 def test_location_features():
-    """Test the location detection features."""
+    """Test the location detection features without logging location data."""
     if not JARVIS_AVAILABLE:
         print("❌ Cannot test: Jarvis modules not available")
         return False
@@ -155,20 +156,20 @@ def test_location_features():
         print("❌ Location database not available")
         return False
 
-    # Test automatic external IP detection
+    # Test automatic external IP detection without printing the IP itself.
     print("Testing automatic external IP detection...")
     external_ip = _get_external_ip_automatically()
     if external_ip:
-        print(f"✅ External IP automatically detected: {external_ip}")
+        print("✅ External IP automatically detected")
     else:
         print("⚠️  Automatic IP detection failed")
         print("💡 You may need to manually configure 'location_ip_address'")
 
-    # Test local IP detection (fallback)
+    # Test local IP detection (fallback) without printing the address.
     print("\nTesting local IP detection (fallback)...")
     local_ip = _get_local_network_ip()
     if local_ip:
-        print(f"✅ Local IP detected: {local_ip}")
+        print("✅ Local IP detected")
     else:
         print("⚠️  Could not detect local IP")
 
@@ -176,7 +177,7 @@ def test_location_features():
     try:
         location = get_location_info(settings=SETTINGS)
         if "error" in location:
-            print(f"⚠️  Location detection result: {location['error']}")
+            print("⚠️  Location detection did not resolve a location")
             reason = location.get("reason")
             advice = location.get("advice")
             if reason == "cgnat_not_found":
@@ -188,23 +189,16 @@ def test_location_features():
             elif "No IP address available" in location['error']:
                 print("💡 No IP available. Provide 'location_ip_address' in config.")
             if advice:
-                print(f"   Advice: {advice}")
+                print("   Additional setup advice is available from the location helper.")
             return False
 
+        # Do not print IP, city, coordinates, or timezone. This script only
+        # needs to prove that the configured location lookup succeeded.
         print("✅ Location detection working!")
-        print(f"   IP: {location.get('ip', 'Unknown')}")
-        print(f"   Location: {location.get('city', 'Unknown')}, {location.get('region', '')}, {location.get('country', 'Unknown')}")
-
-        if location.get('latitude') and location.get('longitude'):
-            print(f"   Coordinates: {location['latitude']}, {location['longitude']}")
-
-        if location.get('timezone'):
-            print(f"   Timezone: {location['timezone']}")
-
         return True
 
     except Exception as e:
-        print(f"❌ Location test error: {e}")
+        print(f"❌ Location test error type: {type(e).__name__}")
         return False
 
 
@@ -273,7 +267,7 @@ def main():
     print("   - Using UPnP (local router) and socket routing instead of third-party services")
     print("   - Working entirely with local databases")
     print("   - Giving you full control over IP detection methods")
-    print("\n💡 Tip: Set JARVIS_VOICE_DEBUG=1 to see location info in debug output")
+    print("\n💡 Tip: Enable voice debug only when troubleshooting, since debug output may contain operational metadata")
 
 
 if __name__ == "__main__":

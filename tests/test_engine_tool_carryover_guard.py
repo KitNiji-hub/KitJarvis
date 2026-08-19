@@ -509,7 +509,10 @@ def test_planner_direct_exec_stamps_tool_failed(
     db = Mock()
     dm = DialogueMemory()
 
-    # Concrete plan step the resolver fast-path can parse without an LLM.
+    # Use a historical-weather query so this test reaches the planner instead
+    # of the intentional single-current-weather planner bypass. The concrete
+    # plan step can then exercise direct-exec without changing production
+    # routing just for the test.
     with patch(
         "src.jarvis.reply.engine.plan_query",
         return_value=["getWeather", "Reply to the user."],
@@ -518,7 +521,7 @@ def test_planner_direct_exec_stamps_tool_failed(
         return_value=["getWeather"],
     ):
         run_reply_engine(db=db, cfg=cfg, tts=None,
-                         text="how's the weather",
+                         text="how was the weather yesterday",
                          dialogue_memory=dm)
 
     # The direct-exec path should have recorded a tool turn with the

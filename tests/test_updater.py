@@ -130,7 +130,8 @@ class TestCheckForUpdates:
                         assert status.current_version == "1.0.0"
 
     @pytest.mark.unit
-    def test_returns_update_when_newer_version_available(self):
+    def test_custom_build_ignores_newer_upstream_release(self):
+        """KitJarvis must never replace itself with an isair/jarvis release."""
         mock_response = MagicMock()
         mock_response.json.return_value = [
             {
@@ -154,13 +155,14 @@ class TestCheckForUpdates:
         mock_response.raise_for_status = MagicMock()
 
         with patch("desktop_app.updater.get_version", return_value=("1.0.0", "stable")):
-            with patch("requests.get", return_value=mock_response):
+            with patch("requests.get", return_value=mock_response) as request_get:
                 with patch("sys.platform", "darwin"):
                     with patch("platform.machine", return_value="arm64"):
                         status = check_for_updates()
-                        assert status.update_available is True
-                        assert status.latest_release is not None
-                        assert status.latest_release.version == "1.1.0"
+                        assert status.update_available is False
+                        assert status.latest_release is None
+                        assert status.releases_since_current == []
+                        request_get.assert_not_called()
 
     @pytest.mark.unit
     def test_skips_prereleases_for_stable_channel(self):
@@ -228,17 +230,14 @@ class TestCheckForUpdates:
                         assert status.update_available is False
 
     @pytest.mark.unit
-    def test_handles_network_error(self):
-        import requests
-
+    def test_custom_build_does_not_contact_upstream(self):
+        """A disabled updater must not make a release-check network request."""
         with patch("desktop_app.updater.get_version", return_value=("1.0.0", "stable")):
-            with patch(
-                "requests.get", side_effect=requests.RequestException("Network error")
-            ):
+            with patch("requests.get") as request_get:
                 status = check_for_updates()
                 assert status.update_available is False
-                assert status.error is not None
-                assert "Network error" in status.error
+                assert status.error is None
+                request_get.assert_not_called()
 
     @pytest.mark.unit
     def test_handles_missing_platform_asset(self):
@@ -273,8 +272,8 @@ class TestCheckForUpdates:
                         assert status.update_available is False
 
     @pytest.mark.unit
-    def test_develop_channel_shows_update_when_no_previous_install(self):
-        """Develop channel should show update when no previous install is recorded."""
+    def test_custom_build_ignores_develop_release_without_previous_install(self):
+        """A fresh custom build still must not consume upstream releases."""
         mock_response = MagicMock()
         mock_response.json.return_value = [
             {
@@ -303,13 +302,13 @@ class TestCheckForUpdates:
                     with patch("sys.platform", "darwin"):
                         with patch("platform.machine", return_value="arm64"):
                             status = check_for_updates()
-                            assert status.update_available is True
-                            assert status.latest_release.asset_id == 200001
-                            assert status.releases_since_current == [status.latest_release]
+                            assert status.update_available is False
+                            assert status.latest_release is None
+                            assert status.releases_since_current == []
 
     @pytest.mark.unit
-    def test_develop_channel_shows_update_when_asset_id_differs(self):
-        """Develop channel should show update when asset ID differs from last install."""
+    def test_custom_build_ignores_develop_release_with_new_asset(self):
+        """A changed upstream asset ID must not re-enable custom-build updates."""
         mock_response = MagicMock()
         mock_response.json.return_value = [
             {
@@ -338,7 +337,8 @@ class TestCheckForUpdates:
                     with patch("sys.platform", "darwin"):
                         with patch("platform.machine", return_value="arm64"):
                             status = check_for_updates()
-                            assert status.update_available is True
+                            assert status.update_available is False
+                            assert status.latest_release is None
 
     @pytest.mark.unit
     def test_develop_channel_no_update_when_asset_id_matches(self):
@@ -409,9 +409,8 @@ class TestCheckForUpdates:
                         assert status.update_available is False
 
     @pytest.mark.unit
-    def test_develop_channel_shows_update_when_commit_differs(self):
-        """Develop channel must show an update when the latest release was
-        built from a different commit than the installed build."""
+    def test_custom_build_ignores_develop_release_from_different_commit(self):
+        """A different upstream commit must not replace the custom build."""
         installed_sha = "a" * 40
         release_sha = "b" * 40
         mock_response = MagicMock()
@@ -441,7 +440,8 @@ class TestCheckForUpdates:
                 with patch("sys.platform", "darwin"):
                     with patch("platform.machine", return_value="arm64"):
                         status = check_for_updates()
-                        assert status.update_available is True
+                        assert status.update_available is False
+                        assert status.latest_release is None
 
     @pytest.mark.unit
     def test_develop_channel_no_update_when_short_commit_matches_release(self):
@@ -514,10 +514,8 @@ class TestCheckForUpdates:
                             assert status.update_available is False
 
     @pytest.mark.unit
-    def test_develop_channel_falls_back_when_installed_version_has_no_commit(self):
-        """When the installed version carries no commit hash (e.g. dev-local
-        from a source run), develop channel falls back to asset-ID tracking
-        and still flags the update when no install is recorded."""
+    def test_custom_build_with_local_version_ignores_develop_release(self):
+        """A source build without a commit stamp stays on the custom build."""
         release_sha = "b" * 40
         mock_response = MagicMock()
         mock_response.json.return_value = [
@@ -547,7 +545,8 @@ class TestCheckForUpdates:
                     with patch("sys.platform", "darwin"):
                         with patch("platform.machine", return_value="arm64"):
                             status = check_for_updates()
-                            assert status.update_available is True
+                            assert status.update_available is False
+                            assert status.latest_release is None
 
 
 class TestUpdateStatus:
@@ -588,8 +587,8 @@ class TestUpdateStatus:
         assert status.releases_since_current == []
 
     @pytest.mark.unit
-    def test_collects_all_releases_since_current_version(self):
-        """Stable channel should return every release newer than the installed version."""
+    def test_custom_build_does_not_collect_upstream_release_changelog(self):
+        """Disabled upstream updates must not surface upstream release history."""
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = [
@@ -633,11 +632,9 @@ class TestUpdateStatus:
                 with patch("sys.platform", "darwin"):
                     with patch("platform.machine", return_value="arm64"):
                         status = check_for_updates()
-                        assert status.update_available is True
-                        assert status.latest_release.version == "1.3.0"
-                        assert len(status.releases_since_current) == 2
-                        assert status.releases_since_current[0].version == "1.3.0"
-                        assert status.releases_since_current[1].version == "1.2.0"
+                        assert status.update_available is False
+                        assert status.latest_release is None
+                        assert status.releases_since_current == []
 
     @pytest.mark.unit
     def test_releases_since_current_empty_when_no_update(self):

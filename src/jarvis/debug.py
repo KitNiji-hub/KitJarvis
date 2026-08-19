@@ -32,6 +32,13 @@ def debug_log(message: str, category: str = "debug") -> None:
     if not _is_debug_enabled():
         return
     try:
-        print(f"[{category:^10}] {message}", file=sys.stderr)
+        # Debug output can include tool results, exception text, URLs, or
+        # request metadata. Apply the same structural secret scrubber used
+        # elsewhere before anything reaches stderr so debug mode cannot
+        # accidentally disclose credentials.
+        from .utils.redact import scrub_secrets
+
+        safe_message = scrub_secrets(str(message))
+        print(f"[{category:^10}] {safe_message}", file=sys.stderr)
     except Exception:
         pass

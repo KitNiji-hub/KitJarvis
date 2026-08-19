@@ -17,6 +17,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 concurrency:
   group: build-desktop-${{ github.ref_name }}-${{ inputs.version }}
   cancel-in-progress: true

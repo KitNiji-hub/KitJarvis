@@ -366,7 +366,7 @@ class TestLLMStrategy:
     def test_parses_comma_separated_response(self):
         backend = _llm_backend(return_value="webSearch, getWeather")
         result = select_tools(
-            "what's the weather",
+            "find current information for my trip",
             _builtin(), {},
             strategy=ToolSelectionStrategy.LLM,
             llm_backend=backend,
@@ -466,7 +466,7 @@ class TestLLMStrategy:
     def test_ignores_hallucinated_tool_names(self):
         backend = _llm_backend(return_value="webSearch, nonExistentTool, getWeather")
         result = select_tools(
-            "search and weather",
+            "search online for travel information",
             _builtin(), {},
             strategy=ToolSelectionStrategy.LLM,
             llm_backend=backend,
@@ -568,7 +568,7 @@ class TestLLMStrategy:
 
         hint = "Current local time: Sunday, 2026-04-20 17:42 (Europe/London)."
         select_tools(
-            "what's the weather?",
+            "find nearby events",
             _builtin(), {},
             strategy=ToolSelectionStrategy.LLM,
             llm_backend=backend,

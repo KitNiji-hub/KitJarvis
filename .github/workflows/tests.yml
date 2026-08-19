@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   unit:
     name: Unit tests (Linux, Python 3.11)
@@ -25,4 +28,3 @@ jobs:
       - name: Run unit tests
         run: |
           python -m pytest -q -m unit
-
