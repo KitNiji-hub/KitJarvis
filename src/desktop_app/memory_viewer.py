@@ -127,7 +127,7 @@ def get_memories() -> Response:
 
         return jsonify({"memories": memories, "count": len(memories)})
     except Exception as e:
-        return jsonify({"error": str(e), "memories": [], "count": 0}), 500
+        return jsonify({"error": type(e).__name__, "memories": [], "count": 0}), 500
 
 
 @app.route("/api/topics")
@@ -156,7 +156,7 @@ def get_topics() -> Response:
             "topics": [{"name": name, "count": count} for name, count in sorted_topics]
         })
     except Exception as e:
-        return jsonify({"error": str(e), "topics": []}), 500
+        return jsonify({"error": type(e).__name__, "topics": []}), 500
 
 
 @app.route("/api/meals")
@@ -202,7 +202,7 @@ def get_meals() -> Response:
         meals = [row_to_dict(row) for row in rows]
         return jsonify({"meals": meals, "count": len(meals)})
     except Exception as e:
-        return jsonify({"error": str(e), "meals": [], "count": 0}), 500
+        return jsonify({"error": type(e).__name__, "meals": [], "count": 0}), 500
 
 
 @app.route("/api/stats")
@@ -241,7 +241,7 @@ def get_stats() -> Response:
             "total_meals": total_meals
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/memory/<int:memory_id>")
@@ -265,7 +265,7 @@ def get_memory(memory_id: int) -> Response:
         else:
             return jsonify({"error": "Memory not found"}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/memory/<int:memory_id>", methods=["DELETE"])
@@ -283,7 +283,7 @@ def delete_memory(memory_id: int) -> Response:
         else:
             return jsonify({"error": "Memory not found"}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/meal/<int:meal_id>", methods=["DELETE"])
@@ -301,7 +301,7 @@ def delete_meal(meal_id: int) -> Response:
         else:
             return jsonify({"error": "Meal not found"}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ def graph_get_all_nodes() -> Response:
         data = store.get_graph_data(root_id, max_depth=max_depth)
         return jsonify(data)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/tree")
@@ -339,7 +339,7 @@ def graph_get_tree() -> Response:
         tree = store.get_subtree(root_id, max_depth=max_depth)
         return jsonify(tree)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/node/<node_id>")
@@ -361,7 +361,7 @@ def graph_get_node(node_id: str) -> Response:
             "ancestors": [a.to_dict() for a in ancestors],
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/node", methods=["POST"])
@@ -390,7 +390,7 @@ def graph_create_node() -> Response:
         )
         return jsonify({"node": node.to_dict()}), 201
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/node/<node_id>", methods=["PUT"])
@@ -415,7 +415,7 @@ def graph_update_node(node_id: str) -> Response:
 
         return jsonify({"node": node.to_dict()})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/node/<node_id>", methods=["DELETE"])
@@ -433,7 +433,7 @@ def graph_delete_node(node_id: str) -> Response:
             return jsonify({"success": True})
         return jsonify({"error": "Node not found"}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/presets")
@@ -456,7 +456,7 @@ def graph_recent_nodes() -> Response:
         nodes = store.get_recent_nodes(limit)
         return jsonify({"nodes": [n.to_dict() for n in nodes]})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/top")
@@ -468,7 +468,7 @@ def graph_top_nodes() -> Response:
         nodes = store.get_top_nodes(limit)
         return jsonify({"nodes": [n.to_dict() for n in nodes]})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/stats")
@@ -481,7 +481,7 @@ def graph_stats() -> Response:
             "total_tokens": store.get_total_tokens(),
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": type(e).__name__}), 500
 
 
 @app.route("/api/graph/import-diary", methods=["POST"])
@@ -542,7 +542,7 @@ def graph_import_diary() -> Response:
                 except Exception as e:
                     debug_log(f"graph import: failed for {date_utc} — {e}", "memory")
                     facts_stored = 0
-                    error_msg = str(e)
+                    error_msg = type(e).__name__
 
                 processed += 1
                 progress_msg = {
@@ -568,7 +568,7 @@ def graph_import_diary() -> Response:
 
         except Exception as e:
             debug_log(f"graph import failed: {e}", "memory")
-            yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+            yield json.dumps({"type": "error", "message": type(e).__name__}) + "\n"
 
     return Response(
         generate(),
@@ -647,7 +647,7 @@ def graph_consolidate_all() -> Response:
             }) + "\n"
         except Exception as e:
             debug_log(f"consolidate-all failed: {e}", "memory")
-            yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+            yield json.dumps({"type": "error", "message": type(e).__name__}) + "\n"
 
     return Response(
         generate(),
