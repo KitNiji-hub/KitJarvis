@@ -76,6 +76,11 @@ pytestmark = [
 def _make_cfg():
     from evals.helpers import MockConfig
     cfg = MockConfig()
+    # Pin both provider-aware fields and Ollama aliases so ambient eval-judge
+    # settings cannot redirect the live Ollama benchmark.
+    cfg.llm_provider = "ollama"
+    cfg.llm_base_url = OLLAMA_URL
+    cfg.llm_chat_model = PERF_MODEL
     cfg.ollama_base_url = OLLAMA_URL
     cfg.ollama_chat_model = PERF_MODEL
     cfg.fast_model = PERF_MODEL

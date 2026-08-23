@@ -29,7 +29,7 @@ from jarvis.llm import (
 Two interchangeable styles dispatch to the same backend:
 
 - **Object-style** (preferred): `get_llm_backend(cfg).direct(...)`. The factory dispatches on `cfg.llm_provider` so swapping providers does not touch call sites. Every site under `src/jarvis/` uses this.
-- **Function-style**: `call_llm_direct(base_url, ...)`. A thin wrapper that constructs an `OllamaBackend(base_url)` and delegates. Used by the performance-recording shims in `tests/performance/` and the eval scripts under `evals/`, where only a base URL is in scope.
+- **Function-style**: `call_llm_direct(base_url, ...)`. A thin wrapper that constructs an `OllamaBackend(base_url)` and delegates. Used by the performance micro-benchmark and eval scripts under `evals/`, where only a base URL is in scope. The performance recorder wraps concrete backend methods so it observes both styles exactly once.
 
 ## `LLMBackend` interface
 

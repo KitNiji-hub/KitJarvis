@@ -1,10 +1,11 @@
 """⏱️ LLM call timing recorder.
 
-Monkey-patches the three entry points in ``jarvis.llm`` (``call_llm_direct``,
-``call_llm_streaming``, ``chat_with_messages``) to record per-call timings
-grouped by the context that issued the call (evaluator, intent judge, tool
-router, etc.). The context is inferred from the caller's ``__qualname__`` on
-the Python call stack, so no instrumentation is needed at the call site.
+Monkey-patches the three concrete backend methods (``direct``, ``streaming``,
+``chat``) to record per-call timings grouped by the context that issued the
+call (evaluator, intent judge, tool router, etc.). This catches both preferred
+object-style calls and function-style helpers without double-counting. The
+context is inferred from the caller's ``__qualname__`` on the Python call
+stack, so no instrumentation is needed at the call site.
 
 Usage:
     with TimingRecorder() as rec:
@@ -22,10 +23,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
-from jarvis import llm as _llm_module
+from jarvis.llm import OllamaBackend, OpenAICompatibleBackend
 
 
-# Map caller __qualname__ → graph context name. Matches the 13 contexts in
+# Map caller __qualname__ → graph context name. Matches the contexts in
 # docs/llm_contexts.md. Anything not listed gets lumped into "other" so we
 # notice new call sites drift in without us updating the doc.
 #
@@ -53,16 +54,19 @@ _CALLER_TO_CONTEXT: dict[str, str] = {
     # Context 7 — max-turn loop digest
     "digest_loop_for_max_turns": "max_turn_digest",
     # Context 8 — tool router
-    # (Context 9 — tool searcher — reuses select_tools_with_llm so it falls
+    # (Context 9 — tool searcher — reuses _select_llm so it falls
     # under the same bucket; that's intentional per docs/llm_contexts.md.)
-    "select_tools_with_llm": "tool_router",
+    "_select_llm": "tool_router",
     # Context 10 — conversation summariser
     "generate_conversation_summary": "summariser",
     # Context 11 — graph fact extraction
     "extract_graph_memories": "graph_extract",
     # Context 12 — graph best-child picker
     "_llm_pick_best_child": "graph_best_child",
-    # Context 13 — tool-specific LLM calls
+    # Context 13 — task-list planner and step resolver
+    "plan_query": "planner",
+    "resolve_next_tool_call": "plan_step_resolver",
+    # Context 14 — tool-specific LLM calls
     "_extract_place_from_user_text": "tool_weather",
     "extract_and_log_meal": "tool_nutrition",
     "generate_followups_for_meal": "tool_nutrition",
@@ -117,12 +121,12 @@ class TimingRecorder:
     def _wrap(self, name: str, original: Callable) -> Callable:
         def wrapped(*args, **kwargs):
             ctx = self._infer_context(skip_frames=2)
-            # Extract model + prompt sizes from args heuristically — all three
-            # entry points take (base_url, chat_model, ...). chat_with_messages
-            # takes a messages list.
+            # Extract model + prompt sizes from backend method arguments.
+            # All three methods take (self, chat_model, ...); chat takes a
+            # messages list while direct/streaming take system + user strings.
             model = ""
             prompt_chars = 0
-            if name == "chat_with_messages":
+            if name == "chat":
                 model = kwargs.get("chat_model") or (args[1] if len(args) > 1 else "")
                 msgs = kwargs.get("messages") or (args[2] if len(args) > 2 else [])
                 if isinstance(msgs, list):
@@ -137,11 +141,14 @@ class TimingRecorder:
             result = original(*args, **kwargs)
             elapsed = time.perf_counter() - t0
 
-            # response size: str for direct/streaming, dict for chat_with_messages
+            # Response size: str for direct/streaming, nested message for chat.
             if isinstance(result, str):
                 response_chars = len(result)
             elif isinstance(result, dict):
-                response_chars = len(str(result.get("content", "")))
+                content = result.get("content", "")
+                if not content and isinstance(result.get("message"), dict):
+                    content = result["message"].get("content", "")
+                response_chars = len(str(content))
             else:
                 response_chars = 0
 
@@ -157,36 +164,20 @@ class TimingRecorder:
         return wrapped
 
     def _patch(self) -> None:
-        """Patch every module that has already imported one of the LLM entry
-        points via ``from ..llm import X``. Those bindings were resolved at
-        import time and do NOT see a setattr on ``jarvis.llm`` itself, so we
-        have to replace the attribute on each importer.
-        """
-        import sys as _sys
-        names = ("call_llm_direct", "call_llm_streaming", "chat_with_messages")
-        # Capture the originals from the llm module once.
-        originals = {n: getattr(_llm_module, n) for n in names}
-        # self._originals stores [(module, name, original_fn)] so _unpatch
-        # can put each binding back exactly where it came from.
+        """Patch concrete backend methods, the shared HTTP-call boundary."""
+
+        names = ("direct", "streaming", "chat")
+        backend_classes = (OllamaBackend, OpenAICompatibleBackend)
+        # Store the exact attribute found so test monkeypatches and provider
+        # implementations are restored unchanged on context exit.
         self._originals["_sites"] = []
-        for mod in list(_sys.modules.values()):
-            if mod is None or mod is _llm_module:
-                continue
-            mod_name = getattr(mod, "__name__", "")
-            if not mod_name.startswith(("jarvis", "tests", "evals")):
-                continue
+        for backend_class in backend_classes:
             for name in names:
-                current = getattr(mod, name, None)
-                if current is originals[name]:
-                    wrapped = self._wrap(name, originals[name])
-                    setattr(mod, name, wrapped)
-                    self._originals["_sites"].append((mod, name, originals[name]))
-        # Also patch the canonical module so any late `from jarvis.llm import X`
-        # after we enter the context sees the wrapper.
-        for name in names:
-            wrapped = self._wrap(name, originals[name])
-            setattr(_llm_module, name, wrapped)
-            self._originals["_sites"].append((_llm_module, name, originals[name]))
+                original = getattr(backend_class, name)
+                setattr(backend_class, name, self._wrap(name, original))
+                self._originals["_sites"].append(
+                    (backend_class, name, original)
+                )
 
     def _unpatch(self) -> None:
         for mod, name, original in self._originals.get("_sites", []):
