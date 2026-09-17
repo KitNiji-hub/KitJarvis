@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import secrets
 import shutil
+import string
 import subprocess
 import sys
 import tempfile
@@ -130,7 +131,12 @@ class SecretGuardTests(unittest.TestCase):
         footer = "-----END " + "RSA PRIVATE KEY-----"
         self.stage("ordinary.txt", header + "\n" + secrets.token_hex(64) + "\n" + footer)
         self.assertNotEqual(self.guard("staged").returncode, 0)
-        self.stage("ordinary.txt", 'password = "' + secrets.token_urlsafe(32) + '"')
+        # Gitleaks intentionally allows all-letter values and uses an entropy
+        # threshold. Include every alphanumeric character exactly once so the
+        # runtime-only fixture always contains digits and has high entropy.
+        alphabet = string.ascii_letters + string.digits
+        synthetic_value = "".join(secrets.SystemRandom().sample(alphabet, len(alphabet)))
+        self.stage("ordinary.txt", 'password = "' + synthetic_value + '"')
         self.assertNotEqual(self.guard("staged").returncode, 0)
 
 
