@@ -45,10 +45,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout full history
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
           ref: develop
+          # This release job intentionally retains its job-scoped token for the
+          # explicit, fast-forward-only `git push origin main` below.
 
       - name: 🔀 Fast-forward main to develop
         run: |

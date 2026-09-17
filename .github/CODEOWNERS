@@ -1,0 +1,17 @@
+# Default repository owner. This requests review and documents ownership;
+# branch rules decide whether an independent approval is required.
+* @KitNiji-hub
+
+# Credential protection, CI and release controls are security-sensitive.
+/.github/ @KitNiji-hub
+/.githooks/ @KitNiji-hub
+/.gitattributes @KitNiji-hub
+/.gitignore @KitNiji-hub
+/.gitleaks.toml @KitNiji-hub
+/.gitleaksignore @KitNiji-hub
+/scripts/install_secret_hooks.ps1 @KitNiji-hub
+/scripts/secret_guard.py @KitNiji-hub
+/scripts/secret_guard.spec.md @KitNiji-hub
+/scripts/test_secret_guard.py @KitNiji-hub
+/scripts/test_workflow_security.py @KitNiji-hub
+/SECURITY.md @KitNiji-hub

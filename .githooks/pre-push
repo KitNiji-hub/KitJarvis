@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+# Must run before SKIP_TESTS. Reads every proposed ref from Git's stdin.
+python scripts/secret_guard.py pre-push
+
 if [ "${SKIP_TESTS:-}" = "1" ]; then
   echo "[pre-push] SKIP_TESTS=1 -> skipping unit tests"
   exit 0

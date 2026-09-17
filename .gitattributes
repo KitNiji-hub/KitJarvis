@@ -7,3 +7,6 @@
 
 # PowerShell is more forgiving but the same logic applies.
 *.ps1 text eol=crlf
+
+# Git hooks must be shell-readable on Windows and Unix.
+.githooks/* text eol=lf
