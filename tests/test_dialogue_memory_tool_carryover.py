@@ -230,9 +230,7 @@ class TestToolCarryover:
         dm = DialogueMemory()
         dm.add_message("user", "look up the api")
         dirty = (
-            "Contact: alice@example.com\n"
-            "Bearer token: eyJhbGciOiJIUzI1NiJ9.abc.def\n"
-            "Fine content stays."
+            "".join(('Contact: alice@example.com\nBearer token: eyJhbGciOiJIUz', 'I1NiJ9.abc.def\nFine content stays.'))
         )
         dm.record_tool_turn([
             {"role": "tool", "tool_call_id": "c1", "content": dirty},

@@ -32,10 +32,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
           cache: pip
@@ -114,7 +116,7 @@ jobs:
 
       - name: 📤 Upload Windows artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: Jarvis-Windows
           path: dist/Jarvis-Windows-x64.zip
@@ -134,10 +136,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
           cache: pip
@@ -195,7 +199,7 @@ jobs:
 
       - name: 📤 Upload macOS artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: Jarvis-macOS-${{ matrix.arch }}
           path: dist/Jarvis-macOS-${{ matrix.arch }}.zip
@@ -216,10 +220,12 @@ jobs:
           df -h
 
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
           cache: pip
@@ -278,7 +284,7 @@ jobs:
 
       - name: 📤 Upload Linux artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: Jarvis-Linux
           path: dist/Jarvis-Linux-x64.tar.gz

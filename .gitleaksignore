@@ -1,0 +1,8 @@
+# Reviewed synthetic redaction fixtures in immutable historical commits only.
+# Current tests construct these values at runtime. Never baseline real secrets.
+94a16ec8cf8e49f41de76ae1f72c203d978bb883:tests/test_dialogue_memory_tool_carryover.py:generic-api-key:234
+94a16ec8cf8e49f41de76ae1f72c203d978bb883:tests/test_redact_extended.py:generic-api-key:69
+8d6c471250d2ac9f7095257e49fa2461b6e68be0:tests/test_desktop_app.py:generic-api-key:279
+1b98b668b4486f7834b5dc08eeeb4f7ec781aaa3:tests/test_dialogue_memory.py:generic-api-key:202
+1b98b668b4486f7834b5dc08eeeb4f7ec781aaa3:tests/test_dialogue_memory.py:generic-api-key:225
+1b98b668b4486f7834b5dc08eeeb4f7ec781aaa3:tests/test_dialogue_memory.py:generic-api-key:299
