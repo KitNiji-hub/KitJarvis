@@ -39,6 +39,16 @@ The goal of this fork is to keep core assistant behavior local wherever practica
 
 Automatic upstream application updates are intentionally disabled in the custom build. See [`SECURITY.md`](SECURITY.md) for the project security policy.
 
+### Protect credentials before contributing
+
+Install Gitleaks 8.30.1, then run
+`./scripts/install_secret_hooks.ps1 -GitleaksPath C:/path/to/gitleaks.exe` once
+per clone. Pre-commit checks staged content; pre-push checks every proposed ref
+before the existing test hook. `SKIP_TESTS=1` never skips secret protection.
+Use `.env.example` for placeholders and keep real configuration outside Git.
+See [credential protection setup and incident response](SECURITY.md#repository-credential-protection).
+
+
 ## Upstream Project
 
 KitJarvis is based on the open-source [isair/jarvis](https://github.com/isair/jarvis) project. Original architecture, UI, and substantial portions of the codebase come from that project; this fork adds Windows-focused local optimizations and custom assistant behavior.

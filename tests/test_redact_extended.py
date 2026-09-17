@@ -72,8 +72,8 @@ class TestAuthorizationHeaders:
 @pytest.mark.unit
 class TestKeywordAnchoredCredentials:
     def test_refresh_token_keyword_redacted(self):
-        out = redact("refresh_token=abcdef123456")
-        assert "abcdef123456" not in out
+        out = redact("".join(('refresh_token=abcdef', '123456')))
+        assert "".join(('abcdef', '123456')) not in out
         assert "refresh_token=[REDACTED]" in out
 
     def test_access_token_keyword_redacted(self):

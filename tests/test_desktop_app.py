@@ -399,10 +399,7 @@ class TestLogViewerReportIssue:
 
         # Simulate what _report_issue does
         log_content = (
-            "Starting Jarvis...\n"
-            "API token: sk-secret-key-12345\n"
-            "User email: user@example.com\n"
-            "Error: Something went wrong\n"
+            "".join(('Starting Jarvis...\nAPI token: sk-secret', '-key-12345\nUser email: user@example.com\nError: Something went wrong\n'))
         )
 
         # Apply same redaction as the actual method

@@ -1,0 +1,7 @@
+title = "KitJarvis credential protection"
+
+[extend]
+useDefault = true
+
+# Keep provider rules, private-key rules and generic high-entropy detection.
+# No directory-wide exclusions: tests and examples must also be scanned.
