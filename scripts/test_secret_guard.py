@@ -135,8 +135,8 @@ class SecretGuardTests(unittest.TestCase):
         # threshold. Include every alphanumeric character exactly once so the
         # runtime-only fixture always contains digits and has high entropy.
         alphabet = string.ascii_letters + string.digits
-        password = "".join(secrets.SystemRandom().sample(alphabet, len(alphabet)))
-        self.stage("ordinary.txt", 'password = "' + password + '"')
+        synthetic_value = "".join(secrets.SystemRandom().sample(alphabet, len(alphabet)))
+        self.stage("ordinary.txt", 'password = "' + synthetic_value + '"')
         self.assertNotEqual(self.guard("staged").returncode, 0)
 
 
