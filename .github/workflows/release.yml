@@ -32,12 +32,13 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
+          # semantic-release may publish commits/tags; retain its job-scoped token.
 
       - name: 🐍 Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '20'
 
@@ -132,7 +133,7 @@ jobs:
           find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) | sort || echo "(none)"
 
       - name: 📎 Attach binaries to release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ needs.semantic-release.outputs.new_release_git_tag }}
           files: |
@@ -185,10 +186,11 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: 📝 Generate changelog from main
         id: changelog
@@ -260,7 +262,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: 📥 Download all artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: artifacts
 
@@ -270,7 +272,7 @@ jobs:
           find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) | sort || echo "(none)"
 
       - name: 📝 Create/Update Latest Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: latest
           name: Latest Development Build
